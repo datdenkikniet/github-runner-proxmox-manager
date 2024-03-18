@@ -1,0 +1,14 @@
+workspace = { members = ["schema-generator"] }
+[package]
+name = "github-runner-proxmox-manager"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+clap = { version = "4.5.3", features = ["derive"] }
+pretty_env_logger = "0.5.0"
+rocket = { version = "0.5.0", features = ["json"] }
+serde_json = "1.0.114"
+tokio = { version = "1.36.0", features = ["rt", "macros"] }

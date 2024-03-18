@@ -1,0 +1,41 @@
+{
+    "info": {
+        "GET": {
+            "returns": {
+                "additionalProperties": 0,
+                "properties": {
+                    "tokens": {
+                        "additionalProperties": {
+                            "properties": {
+                                "comment": {
+                                    "optional": 1,
+                                    "type": "string"
+                                },
+                                "expire": {
+                                    "default": "same as user",
+                                    "description": "API token expiration date (seconds since epoch). '0' means no expiration date.",
+                                    "minimum": 0,
+                                    "optional": 1,
+                                    "type": "integer"
+                                },
+                                "privsep": {
+                                    "default": 1,
+                                    "description": "Restrict API token privileges with separate ACLs (default), or give full privileges of corresponding user.",
+                                    "optional": 1,
+                                    "type": "boolean"
+                                }
+                            },
+                            "type": "object"
+                        },
+                        "optional": 1,
+                        "type": "object"
+                    }
+                },
+                "type": "object"
+            }
+        }
+    },
+    "leaf": 0,
+    "path": "/access/users/{userid}",
+    "text": "{userid}"
+}

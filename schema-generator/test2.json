@@ -1,0 +1,7 @@
+{
+    "default_key": 1,
+    "description": "Hostname (or IP) of this corosync link address.",
+    "format": "address",
+    "format_description": "IP",
+    "type": "string"
+}
