@@ -1,10 +1,10 @@
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 use std::{
     borrow::Cow,
     collections::{BTreeMap, HashSet},
 };
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct TreeNode<'a> {
     #[serde(borrow, flatten)]
@@ -13,7 +13,7 @@ pub struct TreeNode<'a> {
     pub children: Vec<TreeNode<'a>>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct Value<'a> {
     #[serde(default, skip_serializing_if = "Option::is_none")]
@@ -26,7 +26,7 @@ pub struct Value<'a> {
     pub info: BTreeMap<Cow<'a, str>, Info<'a>>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct Info<'a> {
     #[serde(
@@ -37,8 +37,8 @@ pub struct Info<'a> {
     pub allow_token: Option<u32>,
     #[serde(borrow)]
     pub name: Cow<'a, str>,
-    #[serde(borrow, default, skip_serializing_if = "str::is_empty")]
-    pub description: Cow<'a, str>,
+    #[serde(borrow, default, skip_serializing_if = "Option::is_none")]
+    pub description: Option<Cow<'a, str>>,
     #[serde(borrow)]
     pub method: Cow<'a, str>,
     #[serde(borrow, default, skip_serializing_if = "Parameters::is_empty")]
@@ -57,7 +57,7 @@ pub struct Info<'a> {
     pub proxy_to: Option<Cow<'a, str>>,
 }
 
-#[derive(Debug, Deserialize, Default)]
+#[derive(Debug, Serialize, Deserialize, Default)]
 #[serde(deny_unknown_fields)]
 pub struct Parameters<'a> {
     #[serde(rename = "additionalProperties", default)]
@@ -68,13 +68,13 @@ pub struct Parameters<'a> {
     pub ty: Cow<'a, str>,
 }
 
-// impl<'a> Parameters<'a> {
-//     pub fn is_empty(&self) -> bool {
-//         self.ty.is_empty() && self.additional_properties.is_none() && self.properties.is_empty()
-//     }
-// }
+impl<'a> Parameters<'a> {
+    pub fn is_empty(&self) -> bool {
+        self.ty.is_empty() && self.additional_properties.is_none() && self.properties.is_empty()
+    }
+}
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct Property<'a> {
     #[serde(default, skip_serializing_if = "Option::is_none")]
@@ -85,8 +85,8 @@ pub struct Property<'a> {
     // Basically always u32, but not aaalways :/
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub optional: Option<serde_json::Value>,
-    #[serde(borrow, default, skip_serializing_if = "str::is_empty")]
-    pub description: Cow<'a, str>,
+    #[serde(borrow, default, skip_serializing_if = "Option::is_none")]
+    pub description: Option<Cow<'a, str>>,
     #[serde(rename = "type", borrow)]
     pub ty: Option<Cow<'a, str>>,
     #[serde(rename = "typetext", borrow, default)]
@@ -130,7 +130,7 @@ pub struct Property<'a> {
     pub additional_properties: Option<ParametersOrU32<'a>>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 #[serde(untagged)]
 pub enum ParametersOrU32<'a> {
@@ -139,7 +139,7 @@ pub enum ParametersOrU32<'a> {
     Parameters(Parameters<'a>),
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 #[serde(untagged)]
 pub enum Format<'a> {
@@ -149,7 +149,7 @@ pub enum Format<'a> {
     Properties(BTreeMap<Cow<'a, str>, FormatProperty<'a>>),
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct FormatProperty<'a> {
     // This is practically always `minimum`, but only in the next-id case is it `min`
@@ -207,20 +207,20 @@ pub struct FormatProperty<'a> {
     pub min_length: Option<u32>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Serialize, Deserialize)]
 pub struct Permission {
     // TODO: parse permissions...
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct Returns<'a> {
-    #[serde(borrow, default, skip_serializing_if = "str::is_empty")]
-    pub description: Cow<'a, str>,
+    #[serde(borrow, default, skip_serializing_if = "Option::is_none")]
+    pub description: Option<Cow<'a, str>>,
     // If this is not set, validate that the object is empty in its entirety!
     #[serde(borrow, rename = "type")]
     pub ty: Option<Cow<'a, str>>,
-    #[serde(borrow, skip_serializing_if = "Items::is_empty")]
+    #[serde(borrow, skip_serializing_if = "Option::is_none")]
     pub items: Option<Items<'a>>,
     #[serde(borrow, default, skip_serializing_if = "Vec::is_empty")]
     pub links: Vec<Link<'a>>,
@@ -236,15 +236,10 @@ pub struct Returns<'a> {
     pub format: Option<Format<'a>>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct Items<'a> {
-    #[serde(
-        rename = "type",
-        borrow,
-        default,
-        skip_serializing_if = "Option::is_none"
-    )]
+    #[serde(rename = "type", borrow)]
     pub ty: Cow<'a, str>,
     #[serde(
         rename = "additionalProperties",
@@ -274,7 +269,7 @@ pub struct Items<'a> {
     pub max_length: Option<u32>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct Link<'a> {
     pub href: Cow<'a, str>,
