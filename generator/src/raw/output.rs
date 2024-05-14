@@ -8,7 +8,6 @@ pub struct Output {
 }
 
 impl Output {
-    #[allow(clippy::new_without_default)]
     pub fn new() -> Self {
         Self {
             def: None,

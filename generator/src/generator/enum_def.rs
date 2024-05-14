@@ -35,10 +35,6 @@ impl EnumDef {
         self.default.is_some()
     }
 
-    pub fn values(&self) -> &BTreeSet<String> {
-        &self.values
-    }
-
     pub fn name(&self) -> String {
         self.name.lock().to_string()
     }
@@ -49,10 +45,6 @@ impl EnumDef {
         if *my_name != name {
             *my_name = name.to_string();
         }
-    }
-
-    pub fn values_mut(&mut self) -> &mut BTreeSet<String> {
-        &mut self.values
     }
 
     pub fn new<I: AsRef<str>, T: IntoIterator<Item = I>>(

@@ -19,10 +19,9 @@ mod permission;
 pub use permission::Permission;
 
 mod returns;
-pub use returns::Returns;
 
 mod ty;
-pub use ty::{Type, TypeKind};
+pub use ty::Type;
 
 #[derive(Debug, Clone, Deserialize)]
 #[serde(deny_unknown_fields)]
@@ -50,8 +49,6 @@ pub struct Value<'a> {
 pub struct Optional(Option<serde_json::Value>);
 
 impl Optional {
-    pub const FALSE: Self = Optional(None);
-
     pub fn is_empty(&self) -> bool {
         self.0.is_none()
     }

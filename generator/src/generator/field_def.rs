@@ -3,7 +3,6 @@ use std::ops::Deref;
 use proc_macro2::Literal;
 use proc_macro2::TokenStream;
 use quote::quote;
-use quote::ToTokens;
 use syn::spanned::Spanned;
 use syn::Ident;
 
@@ -80,10 +79,8 @@ impl FieldDef {
             self.name.clone()
         }
     }
-}
 
-impl ToTokens for FieldDef {
-    fn to_tokens(&self, tokens: &mut TokenStream) {
+    pub fn to_tokens(&self, tokens: &mut TokenStream, serde_attrs: bool) {
         let FieldDef {
             rename,
             name: _,
@@ -93,7 +90,9 @@ impl ToTokens for FieldDef {
         } = self;
 
         let name = self.name();
-        let name = Ident::new(&name, quote!().span());
+
+        let name = syn::parse_str::<Ident>(&name)
+            .unwrap_or_else(|_| Ident::new_raw(&name, quote!().span()));
 
         let rename = if let Some(rename) = rename {
             let renamed = Literal::string(rename);
@@ -133,7 +132,7 @@ impl ToTokens for FieldDef {
         };
 
         let (empty_check, ty) = ty.as_field_ty(self.optional);
-        let empty_check = empty_check.map(Literal::string).into_iter();
+        let empty_check = empty_check.map(Literal::string);
 
         let doc = doc.iter().flat_map(super::clean_doc).map(|v| {
             let doc_literal = Literal::string(&v);
@@ -141,6 +140,11 @@ impl ToTokens for FieldDef {
                 #[doc = #doc_literal]
             }
         });
+
+        let rename = serde_attrs.then_some(rename).flatten();
+        let serialize = serde_attrs.then_some(serialize).flatten();
+        let empty_check = serde_attrs.then_some(empty_check).flatten().into_iter();
+        let flatten = serde_attrs.then_some(flatten).flatten();
 
         tokens.extend(quote! {
             #rename

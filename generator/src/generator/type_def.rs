@@ -53,10 +53,6 @@ impl TypeDef {
         "::serde::Deserialize",
     ];
 
-    pub fn is_array(&self) -> bool {
-        matches!(self, TypeDef::Array(..))
-    }
-
     pub fn primitive(&self) -> Option<PrimitiveTypeDef> {
         if let Self::Primitive(p) = self {
             Some(*p)
@@ -95,6 +91,10 @@ impl TypeDef {
         additional_props: AdditionalProperties,
     ) -> Self {
         Self::Struct(StructDef::new(name, fields, additional_props))
+    }
+
+    pub fn new_formatted_string(name: String, fields: Vec<FieldDef>) -> Self {
+        Self::Struct(StructDef::new_formatted_string(name, fields))
     }
 
     pub fn as_field_ty(&self, optional: bool) -> (Option<&str>, TokenStream) {

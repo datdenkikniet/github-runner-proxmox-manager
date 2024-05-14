@@ -1,8 +1,8 @@
 use std::{ops::Deref, sync::Arc};
 
 use parking_lot::Mutex;
-use proc_macro2::TokenStream;
-use quote::ToTokens;
+use proc_macro2::{Punct, TokenStream};
+use quote::{ToTokens, TokenStreamExt};
 use syn::{spanned::Spanned, Ident};
 
 use super::{proxmox_api, proxmox_api_str, FieldDef, TypeDef};
@@ -22,17 +22,24 @@ impl AdditionalProperties {
     }
 }
 
+#[derive(Clone, Debug, PartialEq)]
+enum Kind {
+    Normal {
+        fields: Vec<FieldDef>,
+        additional_props: AdditionalProperties,
+    },
+    FormattedString(Vec<FieldDef>),
+}
+
 #[derive(Clone, Debug)]
 pub struct StructDef {
     name: Arc<Mutex<String>>,
-    fields: Vec<FieldDef>,
-    additional_props: AdditionalProperties,
+    kind: Kind,
 }
 
 impl PartialEq for StructDef {
     fn eq(&self, other: &Self) -> bool {
-        self.name.lock().deref() == other.name.lock().deref()
-            && self.additional_props == other.additional_props
+        self.name.lock().deref() == other.name.lock().deref() && self.kind == other.kind
     }
 }
 
@@ -44,30 +51,33 @@ impl StructDef {
     ) -> Self {
         Self {
             name: Arc::new(Mutex::new(name)),
-            fields,
-            additional_props,
+            kind: Kind::Normal {
+                fields,
+                additional_props,
+            },
         }
     }
 
-    pub fn fields(&self) -> &[FieldDef] {
-        &self.fields
+    pub fn new_formatted_string(name: String, fields: Vec<FieldDef>) -> Self {
+        Self {
+            name: Arc::new(Mutex::new(name)),
+            kind: Kind::FormattedString(fields),
+        }
     }
 
     pub fn name(&self) -> String {
         self.name.lock().to_string()
     }
-}
 
-impl ToTokens for StructDef {
-    fn to_tokens(&self, tokens: &mut proc_macro2::TokenStream) {
-        let Self {
-            name: _,
-            fields,
-            additional_props,
-        } = self;
+    #[allow(unused)]
+    fn formatted_string_to_tokens(name: Ident, fields: &[FieldDef], tokens: &mut TokenStream) {}
 
-        let name = Ident::new(&self.name(), quote!().span());
-
+    fn normal_to_tokens(
+        name: Ident,
+        fields: &[FieldDef],
+        additional_props: &AdditionalProperties,
+        tokens: &mut TokenStream,
+    ) {
         let additional_props_ty = match additional_props {
             AdditionalProperties::None => None,
             AdditionalProperties::Untyped => {
@@ -188,12 +198,34 @@ impl ToTokens for StructDef {
 
         tokens.extend(quote! {
             #[derive(#(#derives)*)]
-            pub struct #name {
-                #(#fields)*
-                #additional_props
-            }
-
-            #test
+            pub struct #name
         });
+
+        tokens.append(Punct::new('{', proc_macro2::Spacing::Alone));
+
+        fields.iter().for_each(|f| {
+            f.to_tokens(tokens, true);
+        });
+
+        tokens.extend(additional_props);
+
+        tokens.append(Punct::new('}', proc_macro2::Spacing::Alone));
+
+        tokens.extend(test);
+    }
+}
+
+impl ToTokens for StructDef {
+    fn to_tokens(&self, tokens: &mut proc_macro2::TokenStream) {
+        let Self { name: _, kind } = self;
+        let name = Ident::new(&self.name(), quote!().span());
+
+        match &kind {
+            Kind::Normal {
+                fields,
+                additional_props,
+            } => Self::normal_to_tokens(name, fields, additional_props, tokens),
+            Kind::FormattedString(fields) => Self::formatted_string_to_tokens(name, fields, tokens),
+        };
     }
 }

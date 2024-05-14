@@ -1,12 +1,11 @@
 use std::io::BufReader;
 
-pub mod raw;
+pub(crate) mod raw;
 
-mod path;
-pub use path::{Path, PathElement};
+pub(crate) mod path;
+pub(crate) use path::{Path, PathElement};
 
-mod generator;
-pub use generator::{ClientModDef, Generator};
+pub(crate) mod generator;
 
 use clap::Parser;
 use raw::{flattened::Collection, TreeNode};
@@ -145,7 +144,7 @@ fn main() -> std::io::Result<()> {
     let tree: Vec<TreeNode> = serde_json::from_str(&str).unwrap();
 
     let collection = Collection::from_nodes(&tree);
-    let generator = Generator::new(&collection);
+    let generator = generator::Generator::new(&collection);
 
     match cli {
         Cli::Recursive { file, .. } => generator.generate_file_tree(file),

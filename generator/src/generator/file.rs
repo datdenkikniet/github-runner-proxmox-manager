@@ -6,11 +6,11 @@ use quote::ToTokens;
 use syn::spanned::Spanned;
 use syn::Ident;
 
-use crate::{ClientModDef, Generator};
+use crate::generator::ClientModDef;
 
 use quote::quote;
 
-impl Generator {
+impl super::Generator {
     fn open_rw_truncate<P>(path: P) -> std::io::Result<std::fs::File>
     where
         P: AsRef<Path>,

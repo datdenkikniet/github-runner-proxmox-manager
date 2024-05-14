@@ -77,7 +77,10 @@ impl Type<'_> {
                     default,
                     ..
                 } => {
-                    if let Some(enum_values) = enum_values {
+                    if let Some(Format::Properties(_)) = self.format.as_ref() {
+                        // TODO: parse FormattedString out of this
+                        TypeDef::Primitive(PrimitiveTypeDef::String)
+                    } else if let Some(enum_values) = enum_values {
                         let default = if enum_values.iter().any(|v| Some(v) == default.as_ref()) {
                             default.as_ref().map(Cow::to_string)
                         } else {

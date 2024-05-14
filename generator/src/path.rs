@@ -24,18 +24,6 @@ impl core::fmt::Display for PathElement {
 }
 
 impl PathElement {
-    pub fn is_placeholder(&self) -> bool {
-        matches!(self, Self::Placeholder(_))
-    }
-
-    pub fn matches(&self, other: &Self) -> bool {
-        match (self, other) {
-            (Self::Placeholder(_), _) => true,
-            (Self::Literal(s), Self::Literal(o)) => s == o,
-            (Self::Literal(_), Self::Placeholder(_)) => false,
-        }
-    }
-
     pub fn as_string_without_braces(&self) -> &str {
         match self {
             PathElement::Literal(v) | PathElement::Placeholder(v) => v,
@@ -73,22 +61,6 @@ impl TryFrom<&str> for Path {
 }
 
 impl Path {
-    pub fn matches<'a>(&self, other: impl IntoIterator<Item = &'a str>) -> bool {
-        let mut elements = self.elements.iter();
-        let mut other = other.into_iter();
-        let mut zipped = (&mut elements).zip(&mut other);
-
-        for (l, r) in &mut zipped {
-            if let PathElement::Literal(literal) = l {
-                if literal != r {
-                    return false;
-                }
-            }
-        }
-
-        other.next().is_none() && elements.next().is_none()
-    }
-
     pub fn iter(&self) -> impl Iterator<Item = &'_ PathElement> + '_ {
         self.elements.iter()
     }
